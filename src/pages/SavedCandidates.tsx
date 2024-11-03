@@ -1,30 +1,44 @@
-// import React from 'react';
-import { useCandidateContext } from '../components/CandidateContext';
-import { Candidate } from '../interfaces/Candidate.interface';
+import { useState } from 'react';
+// Ensure the CSS file is imported
 
-const SavedCandidates = () => {
-  const { savedCandidates } = useCandidateContext();
+interface Candidate {
+  login: string;
+  avatar_url: string;
+  name: string;
+  location: string;
+  email: string;
+  company: string;
+  html_url: string;
+}
 
-  if (savedCandidates.length === 0) {
-    return <div>No candidates have been accepted</div>;
+function SavedCandidates() {
+  const [potentialCandidates, setPotentialCandidates] = useState<Candidate[]>(() => {
+    const savedCandidates = localStorage.getItem('potentialCandidates');
+    return savedCandidates ? JSON.parse(savedCandidates) : [];
+  });
+
+  if (potentialCandidates.length === 0) {
+    return <div className="no-candidates">No candidates have been accepted</div>;
   }
 
   return (
-    <div>
-      <h1>Saved Candidates</h1>
-      {savedCandidates.map((candidate: Candidate, index: number) => (
-        <div key={index}>
-          <img src={candidate.avatar} alt={candidate.name} />
-          <h2>{candidate.name}</h2>
-          <p>Username: {candidate.username}</p>
-          <p>Location: {candidate.location}</p>
-          <p>Email: {candidate.email}</p>
-          <p>Company: {candidate.company}</p>
-          <a href={candidate.html_url}>Profile</a>
-        </div>
-      ))}
+    <div className="saved-candidates-container">
+      <h1>Potential Candidates</h1>
+      <div className="candidates-list">
+        {potentialCandidates.map(candidate => (
+          <div key={candidate.login} className="candidate-card">
+            <img src={candidate.avatar_url} alt="Avatar" className="candidate-avatar" />
+            <h2 className="candidate-name">{candidate.name}</h2>
+            <p className="candidate-username">Username: {candidate.login}</p>
+            <p className="candidate-location">Location: {candidate.location || 'N/A'}</p>
+            <p className="candidate-email">Email: {candidate.email || 'N/A'}</p>
+            <p className="candidate-company">Company: {candidate.company || 'N/A'}</p>
+            <a href={candidate.html_url} className="candidate-profile">Profile</a>
+          </div>
+        ))}
+      </div>
     </div>
   );
-};
+}
 
 export default SavedCandidates;

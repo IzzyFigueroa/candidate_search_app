@@ -1,36 +1,52 @@
-// src/components/CandidateSearch.tsx
-
 import { useState, useEffect } from 'react';
-import { Candidate } from '../interfaces/Candidate.interface';
-import { useCandidateContext } from '../components/CandidateContext';
-import { searchGithubUser } from '../api/API';
+import axios from 'axios';
 
-const CandidateSearch = () => {
+
+
+interface Candidate {
+  login: string;
+  avatar_url: string;
+  name: string;
+  location: string;
+  email: string;
+  company: string;
+  html_url: string;
+}
+
+function CandidateSearch() {
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [currentCandidate, setCurrentCandidate] = useState<Candidate | null>(null);
-  const { addCandidate } = useCandidateContext();
+  const [potentialCandidates, setPotentialCandidates] = useState<Candidate[]>(() => {
+    const savedCandidates = localStorage.getItem('potentialCandidates');
+    return savedCandidates ? JSON.parse(savedCandidates) : [];
+  });
 
   useEffect(() => {
-    fetchNextCandidate();
+    axios.get('https://api.github.com/users')
+      .then(response => {
+        setCandidates(response.data);
+        setCurrentCandidate(response.data[0]);
+      })
+      .catch(error => console.error('Error fetching candidates:', error));
   }, []);
 
-  const fetchNextCandidate = async () => {
-    try {
-      const candidate = await searchGithubUser('someUsername');
-      setCurrentCandidate(candidate);
-    } catch (error) {
-      console.error('Failed to fetch candidate:', error);
-    }
-  };
-
-  const handleAccept = () => {
+  const handleSaveCandidate = () => {
     if (currentCandidate) {
-      addCandidate(currentCandidate);
-      fetchNextCandidate();
+      setPotentialCandidates(prev => {
+        const updatedCandidates = [...prev, currentCandidate];
+        localStorage.setItem('potentialCandidates', JSON.stringify(updatedCandidates));
+        return updatedCandidates;
+      });
+      showNextCandidate();
     }
   };
 
-  const handleReject = () => {
-    fetchNextCandidate();
+  const showNextCandidate = () => {
+    setCandidates(prev => {
+      const nextCandidates = prev.slice(1);
+      setCurrentCandidate(nextCandidates[0]);
+      return nextCandidates;
+    });
   };
 
   if (!currentCandidate) {
@@ -39,17 +55,22 @@ const CandidateSearch = () => {
 
   return (
     <div>
-      <img src={currentCandidate.avatar} alt={currentCandidate.name} />
-      <h2>{currentCandidate.name}</h2>
-      <p>Username: {currentCandidate.username}</p>
-      <p>Location: {currentCandidate.location}</p>
-      <p>Email: {currentCandidate.email}</p>
-      <p>Company: {currentCandidate.company}</p>
-      <a href={currentCandidate.html_url}>Profile</a>
-      <button onClick={handleAccept}>+</button>
-      <button onClick={handleReject}>-</button>
+      <h1>Candidate Search</h1>
+      <div>
+        <img src={currentCandidate.avatar_url} alt="Avatar" />
+        <h2>{currentCandidate.login}</h2>
+        <p>Username: {currentCandidate.login}</p>
+        <p>Location: {currentCandidate.location}</p>
+        <p>Email: {currentCandidate.email}</p>
+        <p>Company: {currentCandidate.company}</p>
+        <a href={currentCandidate.html_url}>Profile</a>
+        <div>
+          <button onClick={handleSaveCandidate}>+</button>
+          <button onClick={showNextCandidate}>-</button>
+        </div>
+      </div>
     </div>
   );
-};
+}
 
 export default CandidateSearch;

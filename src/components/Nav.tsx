@@ -2,13 +2,13 @@ import { NavLink } from 'react-router-dom';
 
 const Nav = () => {
   return (
-    <nav>
+    <nav className="nav">
       
           <NavLink to="/">
             Candidate Search
           </NavLink>
         
-          <NavLink to="/saved-candidates">
+          <NavLink to="/savedcandidates">
             Saved Candidates
           </NavLink>
         
